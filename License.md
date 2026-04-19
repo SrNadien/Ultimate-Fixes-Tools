@@ -1,8 +1,8 @@
-#-------------------------------------------------------------------------------
-## ## Copyright 2024-2025## ## 
+
+Copyright 2024-2025## ## 
 All rights reserved. NadienDev
 Distribution of the software in any form is only allowed with## explicit, prior permission from the owner.
-#-------------------------------------------------------------------------------
+
 This code and assets are the property of, owned and copyrighted by nadiendev.
 This code is provided under a modified visible-source license that is as follows:
 Any and all users are permitted to use the source for educational purposes, or to create derivative works for private use only. GitHub forks and direct downloads are considered derivative works.
