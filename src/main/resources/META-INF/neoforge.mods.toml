@@ -3,8 +3,8 @@ loaderVersion = "[4,)"
 license = "MIT"
 
 [[mods]]
-    modId = "nadienfixestools"
-    version = "1.0.0"
+    modId = "ultimatefixestools"
+    version = "1.0.1"
     displayName = "NadienFixes Tools"
     description = '''
         Fire fix system, debug tool, lag analyzer and server diagnostics for NeoForge 1.21.1.
