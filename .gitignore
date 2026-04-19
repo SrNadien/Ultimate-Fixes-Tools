@@ -1,0 +1,16 @@
+# Build
+build/
+.gradle/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# NeoForge MDK
+run/
+runs/

@@ -1,58 +1,127 @@
-Ultimate FixesTools
+# NadienFixesTools — Mod NeoForge 1.21.1
 
-NeoForge 1.21.1  ·  Server-side only  ·  No client required
+**Fire Fix · Lag Analyzer · Debug Tool · Server Diagnostics**
 
-A server-side utility mod that acts as your server's all-in-one fire repair system, lag analyzer, and diagnostics toolkit. Built for vanilla NeoForge servers and hybrid setups like Arclight.
+Mod server-side only. Compatible con Arclight y servidores híbridos Bukkit/NeoForge.
 
+---
 
+## 📦 Compilar el mod
 
-Fire fix system
+### Requisitos
+- **JDK 21** (no JRE)
+- **Conexión a internet** (primera compilación descarga NeoForge MDK ~200 MB)
+- Git (opcional)
 
-→Hooks into BlockFadeEvent and neighbor notifications to catch cancellations instantly.
-→Captures a filtered stacktrace exposing the exact mod or plugin responsible.
-→Restores fire on the next tick if removed within 1–2 ticks — up to maxFireRestoreAttempts retries.
-→Avoids infinite loops: logs a permanent block warning after max attempts and stops.
-→Optionally ignores player-caused events to reduce false positives.
+### Pasos en Windows
+```bat
+cd nadienfixestools
+gradlew.bat build
+```
 
+### Pasos en Linux / macOS
+```bash
+cd nadienfixestools
+chmod +x gradlew
+./gradlew build
+```
 
-Lag analyzer
+### Salida
+```
+build/libs/nadienfixestools-1.0.0.jar          ← mod para instalar
+build/libs/nadienfixestools-1.0.0-sources.jar  ← código fuente
+```
 
-→Rolling 100-tick history — real MSPT average and TPS, measured tick-by-tick.
-→Flags chunks with 50+ entity clusters and logs their coordinates and dimension.
-→Configurable MSPT threshold — only logs when things actually matter.
-→CPU and RAM stats accessible via command at any time.
+Copia `nadienfixestools-1.0.0.jar` a la carpeta `mods/` de tu servidor.
 
+---
 
-Logging system
+## ⚙️ Configuración
 
-All data written asynchronously (no tick overhead) to NadienFixesTools/ in your server root.
+El archivo se genera automáticamente en `config/nadienfixestools.properties` al iniciar el servidor:
 
-firelogs.logIGNITE_CANCELLED, FIRE_REMOVED, FIRE_RESTORED with timestamps and cause.
-rutas.logFull class path of the detected culprit, labeled MOD / PLUGIN / SYSTEM.
-quetolagea.logLag events with coordinates, dimension, MSPT, and entity counts.
+```properties
+# Fire Fix
+enableFireFix=true
+maxFireRestoreAttempts=3
+ignorePlayerCausedEvents=true
+debugFire=true
 
-Built-in spam filter: repeated messages are suppressed after a configurable threshold.
+# Spam Control
+enableSpamControl=true
+spamCooldownMs=5000
+spamMaxSameMessage=3
 
+# Lag Monitor
+enableLagMonitor=true
+lagThresholdMspt=50.0
+lagLogIntervalTicks=200
+```
 
+---
 
-Commands
+## 📁 Archivos de log
 
-/nftpsLive TPS, average MSPT, last tick time, server health status. OP 2
-/nfresourcesCPU, RAM (used/total/max), entity count, loaded chunks, MSPT. OP 2
-/nflagManual lag scan across all dimensions, saved to quetolagea.log. OP 2
-/nfuptimeServer uptime in hours, minutes, and seconds. All players
+Se crean en la carpeta `NadienFixesTools/` en la raíz del servidor:
 
+| Archivo | Contenido |
+|---|---|
+| `logro.log` | Eventos de fuego: IGNITE_CANCELLED, FIRE_REMOVED, FIRE_RESTORED |
+| `rutas.log` | Rutas de clase del causante (MOD / PLUGIN / SISTEMA) |
+| `quetolagea.log` | Fuentes de lag con coords, dimensión y MSPT |
 
-Configuration
+---
 
-Auto-generated at config/nadienfixestools.properties on first launch.
+## 🕹️ Comandos
 
-enableFireFixmaxFireRestoreAttemptsignorePlayerCausedEventsdebugFireenableSpamControlspamCooldownMsspamMaxSameMessageenableLagMonitorlagThresholdMsptlagLogIntervalTicks
+| Comando | Permiso | Descripción |
+|---|---|---|
+| `/nftps` | OP 2 | TPS real, MSPT promedio, estado |
+| `/nfresources` | OP 2 | CPU, RAM, entidades, chunks, MSPT |
+| `/nflag` | OP 2 | Escaneo manual de lag → guarda en log |
+| `/nfuptime` | Todos | Uptime del servidor en horas/minutos |
 
+---
 
-Requirements
+## 🔥 Cómo funciona el Fire Fix
 
-→Minecraft 1.21.1 with NeoForge 21.1.215
-→Server-side only — clients do not need to install this mod.
-→Compatible with Arclight and other NeoForge/Bukkit hybrid servers.
-→No dependencies beyond NeoForge itself.
+1. Se detecta cuando se coloca fuego (`BlockEvent.EntityPlaceEvent`)
+2. Si en el siguiente tick el bloque volvió a ser `air`, se identifica el causante via stacktrace filtrado
+3. Se registra en `logro.log` y `rutas.log` con el mod/plugin responsable
+4. Se restaura el fuego (hasta `maxFireRestoreAttempts` veces)
+5. Si se agotan los intentos, se loguea como bloqueo permanente
+
+### Compatibilidad Arclight
+El filtro de stacktraces detecta prefijos de Bukkit (`org.bukkit.`, `io.papermc.`, etc.) y los etiqueta como `PLUGIN/BUKKIT` en los logs, diferenciándolos de mods NeoForge.
+
+---
+
+## 🏗️ Estructura del proyecto
+
+```
+nadienfixestools/
+├── build.gradle
+├── settings.gradle
+├── gradlew / gradlew.bat
+└── src/main/
+    ├── java/nadiendev/nadienfixestools/
+    │   ├── NadienFixesTools.java          ← clase principal
+    │   ├── config/ModConfig.java          ← configuración
+    │   ├── logging/LogManager.java        ← sistema de logs async
+    │   ├── util/StackTraceAnalyzer.java   ← identificador de causas
+    │   ├── events/
+    │   │   ├── FireFixHandler.java        ← fire fix + restauración
+    │   │   └── LagMonitorHandler.java     ← monitor de MSPT/TPS
+    │   └── commands/CommandHandler.java   ← /nftps /nfresources /nflag /nfuptime
+    └── resources/META-INF/
+        └── neoforge.mods.toml
+```
+
+---
+
+## 📝 Notas
+
+- El mod es **server-side only**: no requiere instalarse en el cliente
+- Logs asíncronos: la escritura a disco no bloquea el thread del servidor
+- Control de spam integrado: mensajes repetidos se suprimen tras `spamMaxSameMessage` ocurrencias
+- `ignorePlayerCausedEvents=true` evita trackear fuego que pone el propio jugador (evita falsos positivos)

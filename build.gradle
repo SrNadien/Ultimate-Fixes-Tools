@@ -1,0 +1,190 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.137'
+    id 'idea'
+}
+
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
+}
+
+version = minecraft_version + "-" + mod_version + "-" + tag_lanzador
+group = mod_group_id
+
+base {
+    archivesName = mod_name
+}
+
+
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+    
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+repositories {
+    mavenCentral()
+    maven {
+        name = "Curios Maven"
+        url = "https://maven.theillusivec4.top/"
+    }
+    maven {
+        name = "Curse Maven"
+        url = "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven {
+        url = "https://maven.blamejared.com"
+    }
+    maven {
+		name = "TerraformersMC"
+		url = "https://maven.terraformersmc.com/"
+	}
+    maven {
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+     maven {
+        url = 'https://maven2.bai.lol'
+        content {
+            includeGroup 'lol.bai'
+            includeGroup 'mcp.mobius.waila'
+        }
+    }
+     maven { // TOP
+        name 'tterrag maven'
+        url "https://maven.tterrag.com/"
+    }
+    maven { url "https://maven.shedaniel.me" }
+       maven {
+        name 'enderio'
+        url 'https://maven.rover656.dev/releases'
+    }
+}
+dependencies {
+    //jei
+    // compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    // compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    // runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+   // allthemodium y librerias
+//    compileOnly  ("curse.maven:allthemodium-364466:${allthemodium_version}")
+//    localRuntime ("curse.maven:allthemodium-364466:${allthemodium_version}")
+//    compileOnly  ("curse.maven:geckolib-388172:${geckolib_version}")
+//    localRuntime ("curse.maven:geckolib-388172:${geckolib_version}")
+//    compileOnly  ("curse.maven:ato-405593:${ato_version}")
+//    localRuntime ("curse.maven:ato-405593:${ato_version}")
+//    compileOnly  "curse.maven:mekanism-268560:${mekanism_version}"
+//    localRuntime "curse.maven:mekanism-268560:${mekanism_version}"
+//    compileOnly  "curse.maven:immersive-engineering-231951:${immersiveengineering_version}"
+//    localRuntime "curse.maven:immersive-engineering-231951:${immersiveengineering_version}"
+//    compileOnly  "com.enderio:${ender_io_base}"
+//    compileOnly  "com.enderio:${ender_io_base}:api"
+//    compileOnly  "com.enderio:${ender_io_machines}"
+//    compileOnly  "com.enderio:${ender_io_machines}:api"
+//    localRuntime "com.enderio:${ender_io_base}"
+//    localRuntime "com.enderio:${ender_io_machines}"
+//    compileOnly  "curse.maven:actually-additions-228404:${actuallyadditions_version}"
+//    localRuntime "curse.maven:actually-additions-228404:${actuallyadditions_version}"
+   // Curios: requerido por ActuallyAdditions para su datagen
+//    compileOnly  "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+//    localRuntime "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+    
+}
+
+
+// tasks.withType(ProcessResources).configureEach {
+//     var replaceProperties = [
+//             minecraft_version      : minecraft_version,
+//             minecraft_version_range: minecraft_version_range,
+//             neo_version            : neo_version,
+//             loader_version_range   : loader_version_range,
+//             mod_id                 : mod_id,
+//             mod_name               : mod_name,
+//             mod_license            : mod_license,
+//             mod_version            : mod_version,
+//             authors                : authors,
+//             issue_tracker        : issue_tracker,
+//             allthemodium_version: allthemodium_version,
+//             geckolib_version : geckolib_version,
+//             ato_version : ato_version,
+//             jei_version : jei_version,
+//             mekanism_version : mekanism_version,
+//     ]
+    
+//     inputs.properties replaceProperties
+    
+//     filesMatching('META-INF/neoforge.mods.toml') {
+//         expand replaceProperties
+//     }
+// }
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
