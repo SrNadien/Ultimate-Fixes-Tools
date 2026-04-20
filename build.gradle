@@ -108,62 +108,30 @@ repositories {
     }
 }
 dependencies {
-    //jei
-    // compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
-    // runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
-
-   // allthemodium y librerias
-//    compileOnly  ("curse.maven:allthemodium-364466:${allthemodium_version}")
-//    localRuntime ("curse.maven:allthemodium-364466:${allthemodium_version}")
-//    compileOnly  ("curse.maven:geckolib-388172:${geckolib_version}")
-//    localRuntime ("curse.maven:geckolib-388172:${geckolib_version}")
-//    compileOnly  ("curse.maven:ato-405593:${ato_version}")
-//    localRuntime ("curse.maven:ato-405593:${ato_version}")
-//    compileOnly  "curse.maven:mekanism-268560:${mekanism_version}"
-//    localRuntime "curse.maven:mekanism-268560:${mekanism_version}"
-//    compileOnly  "curse.maven:immersive-engineering-231951:${immersiveengineering_version}"
-//    localRuntime "curse.maven:immersive-engineering-231951:${immersiveengineering_version}"
-//    compileOnly  "com.enderio:${ender_io_base}"
-//    compileOnly  "com.enderio:${ender_io_base}:api"
-//    compileOnly  "com.enderio:${ender_io_machines}"
-//    compileOnly  "com.enderio:${ender_io_machines}:api"
-//    localRuntime "com.enderio:${ender_io_base}"
-//    localRuntime "com.enderio:${ender_io_machines}"
-//    compileOnly  "curse.maven:actually-additions-228404:${actuallyadditions_version}"
-//    localRuntime "curse.maven:actually-additions-228404:${actuallyadditions_version}"
-   // Curios: requerido por ActuallyAdditions para su datagen
-//    compileOnly  "top.theillusivec4.curios:curios-neoforge:${curios_version}"
-//    localRuntime "top.theillusivec4.curios:curios-neoforge:${curios_version}"
-    
 }
 
 
-// tasks.withType(ProcessResources).configureEach {
-//     var replaceProperties = [
-//             minecraft_version      : minecraft_version,
-//             minecraft_version_range: minecraft_version_range,
-//             neo_version            : neo_version,
-//             loader_version_range   : loader_version_range,
-//             mod_id                 : mod_id,
-//             mod_name               : mod_name,
-//             mod_license            : mod_license,
-//             mod_version            : mod_version,
-//             authors                : authors,
-//             issue_tracker        : issue_tracker,
-//             allthemodium_version: allthemodium_version,
-//             geckolib_version : geckolib_version,
-//             ato_version : ato_version,
-//             jei_version : jei_version,
-//             mekanism_version : mekanism_version,
-//     ]
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_named              : mod_named,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+    ]
     
-//     inputs.properties replaceProperties
+    inputs.properties replaceProperties
     
-//     filesMatching('META-INF/neoforge.mods.toml') {
-//         expand replaceProperties
-//     }
-// }
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand replaceProperties
+    }
+}
 
 publishing {
     publications {

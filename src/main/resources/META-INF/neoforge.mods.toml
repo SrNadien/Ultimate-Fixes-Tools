@@ -1,27 +1,25 @@
 modLoader = "javafml"
-loaderVersion = "[4,)"
-license = "MIT"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
 
 [[mods]]
-    modId = "ultimatefixestools"
-    version = "1.0.1"
-    displayName = "NadienFixes Tools"
-    description = '''
-        Fire fix system, debug tool, lag analyzer and server diagnostics for NeoForge 1.21.1.
-        Server-side only. Compatible with Arclight/hybrid servers.
-    '''
-    logoFile = ""
+    modId = "${mod_id}"
+    version = "${mod_version}"
+    displayName = "${mod_named}"
+    authors="${mod_authors}"
+    description = "${mod_description}"
+    logoFile = "logo.png"
 
-    [[mods.dependencies.ultimatefixestools]]
+    [[mods.dependencies.${mod_id}]]
         modId = "neoforge"
         type = "required"
-        versionRange = "[21.1.222,)"
+        versionRange = "${neo_version}"
         ordering = "NONE"
         side = "SERVER"
 
-    [[mods.dependencies.ultimatefixestools]]
+    [[mods.dependencies.${mod_id}]]
         modId = "minecraft"
         type = "required"
-        versionRange = "[1.21.1,1.22)"
+        versionRange = "${minecraft_version}"
         ordering = "NONE"
         side = "SERVER"

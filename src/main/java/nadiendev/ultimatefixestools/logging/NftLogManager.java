@@ -11,17 +11,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 
-/**
- * Sistema de logging a /NadienFixesTools/
- *   logro.log      - eventos de fuego (ignite, fade, tick)
- *   rutas.log      - rutas de clase (mod/plugin/system)
- *   quetolagea.log - fuentes de lag con coords y dimensión
- *
- * RENOMBRADO de LogManager a NftLogManager para evitar conflicto
- * con org.apache.logging.log4j.LogManager.
- *
- * Incluye control de spam para evitar inundar los archivos.
- */
 public class NftLogManager {
 
     private static final Logger LOGGER = LogManager.getLogger("ultimatefixestools");
@@ -31,11 +20,9 @@ public class NftLogManager {
     private static final Path LOG_FIRE  = BASE_DIR.resolve("firelogs.log");
     private static final Path LOG_RUTAS = BASE_DIR.resolve("rutas.log");
     private static final Path LOG_LAG   = BASE_DIR.resolve("quetolagea.log");
+    private static final Path LOG_CRASH = BASE_DIR.resolve("bloques-crasheantes.log");
 
-    // Control de spam: mapa mensaje -> [count, lastTimeMs]
     private static final Map<String, long[]> spamTracker = new ConcurrentHashMap<>();
-
-    // Buffer de escritura asíncrona (evita bloquear el thread del servidor)
     private static final BlockingQueue<String[]> writeQueue = new LinkedBlockingQueue<>(2000);
     private static Thread writerThread;
     private static volatile boolean running = false;
@@ -43,36 +30,35 @@ public class NftLogManager {
     public static void init() {
         try {
             Files.createDirectories(BASE_DIR);
-            writeHeader(LOG_FIRE,  "=== NadienFixesTools - logro.log (fire events) ===");
-            writeHeader(LOG_RUTAS, "=== NadienFixesTools - rutas.log (class paths) ===");
-            writeHeader(LOG_LAG,   "=== NadienFixesTools - quetolagea.log (lag sources) ===");
+            writeHeader(LOG_FIRE,  "=== UltimateFixesTools - firelogs.log (fire events) ===");
+            writeHeader(LOG_RUTAS, "=== UltimateFixesTools - rutas.log (class paths) ===");
+            writeHeader(LOG_LAG,   "=== UltimateFixesTools - quetolagea.log (lag sources) ===");
+            writeHeader(LOG_CRASH, "=== UltimateFixesTools - bloques-crasheantes.log (entidades y TileEntities eliminadas) ===");
         } catch (IOException e) {
-            LOGGER.error("[NFT Log] No se pudo crear directorio NadienFixesTools/", e);
+            LOGGER.error("[UFT Log] No se pudo crear directorio UltimateFixesTools/", e);
             return;
         }
 
         running = true;
-        writerThread = new Thread(NftLogManager::writerLoop, "NFT-LogWriter");
+        writerThread = new Thread(NftLogManager::writerLoop, "UFT-LogWriter");
         writerThread.setDaemon(true);
         writerThread.start();
 
-        LOGGER.info("[NFT Log] Sistema de logs iniciado en {}", BASE_DIR.toAbsolutePath());
+        LOGGER.info("[UltimateFixesTools Log] Sistema de logs iniciado en {}", BASE_DIR.toAbsolutePath());
     }
 
-    /** Loguea un evento de fuego (logro.log) */
+    /** Loguea un evento de fuego (firelogs.log) */
     public static void logFire(String eventType, String cause, String details) {
-        String msg = String.format("[%s] [FIRE/%s] causa=%s | %s",
-                now(), eventType, cause, details);
+        String msg = String.format("[%s] [FIRE/%s] causa=%s | %s", now(), eventType, cause, details);
         if (spamCheck("fire:" + eventType + ":" + cause)) {
             enqueue(LOG_FIRE.toString(), msg);
-            if (ModConfig.DEBUG_FIRE) LOGGER.info("[NFT Fire] {}", msg);
+            if (ModConfig.DEBUG_FIRE) LOGGER.info("[UFT Fire] {}", msg);
         }
     }
 
     /** Loguea una ruta de clase identificada (rutas.log) */
     public static void logRuta(String sourceType, String className, String context) {
-        String msg = String.format("[%s] [RUTA/%s] clase=%s | ctx=%s",
-                now(), sourceType, className, context);
+        String msg = String.format("[%s] [RUTA/%s] clase=%s | ctx=%s", now(), sourceType, className, context);
         if (spamCheck("ruta:" + className)) {
             enqueue(LOG_RUTAS.toString(), msg);
         }
@@ -85,7 +71,7 @@ public class NftLogManager {
                 now(), dimension, x, y, z, mspt, source, extra);
         if (spamCheck("lag:" + source + dimension)) {
             enqueue(LOG_LAG.toString(), msg);
-            if (ModConfig.ENABLE_LAG_MONITOR) LOGGER.warn("[NFT Lag] {}", msg);
+            if (ModConfig.ENABLE_LAG_MONITOR) LOGGER.warn("[UFT Lag] {}", msg);
         }
     }
 
@@ -94,29 +80,36 @@ public class NftLogManager {
         logLag("unknown", 0, 0, 0, source, mspt, extra);
     }
 
+    /**
+     * Loguea eliminaciones manuales de entidades/TileEntities en bloques-crasheantes.log.
+     * Sin control de spam — cada acción manual debe quedar registrada completa.
+     *
+     * @param action  Tipo: KILL_ENTITIES, KILL_TILEENTITIES, etc.
+     * @param details Bloque de texto con coords, tipos y cantidad eliminada.
+     */
+    public static void logCrash(String action, String details) {
+        String entry = String.format("[%s] [%s]\n%s%s", now(), action, details, "─".repeat(60));
+        enqueue(LOG_CRASH.toString(), entry);
+        LOGGER.warn("[UFT Crash] {} → ver bloques-crasheantes.log", action);
+    }
+
     // ── Spam control ──────────────────────────────────────────────────────────
-    /** @return true si el mensaje debe ser logueado (no es spam) */
     private static boolean spamCheck(String key) {
         if (!ModConfig.ENABLE_SPAM_CONTROL) return true;
 
         long now = System.currentTimeMillis();
         long[] data = spamTracker.computeIfAbsent(key, k -> new long[]{0, 0});
-
         long timeSinceLast = now - data[1];
 
         if (timeSinceLast >= ModConfig.SPAM_COOLDOWN_MS) {
-            data[0] = 1;
-            data[1] = now;
+            data[0] = 1; data[1] = now;
             return true;
         }
 
-        data[0]++;
-        data[1] = now;
-
+        data[0]++; data[1] = now;
         if (data[0] <= ModConfig.SPAM_MAX_SAME_MSG) return true;
-
         if (data[0] == ModConfig.SPAM_MAX_SAME_MSG + 1) {
-            LOGGER.debug("[NFT Spam] Suprimiendo mensaje repetitivo: {}", key);
+            LOGGER.debug("[UFT Spam] Suprimiendo mensaje repetitivo: {}", key);
         }
         return false;
     }
@@ -124,7 +117,7 @@ public class NftLogManager {
     // ── Writer asíncrono ──────────────────────────────────────────────────────
     private static void enqueue(String path, String msg) {
         if (!writeQueue.offer(new String[]{path, msg})) {
-            LOGGER.warn("[NFT Log] Cola de escritura llena, descartando mensaje");
+            LOGGER.warn("[UFT Log] Cola de escritura llena, descartando mensaje");
         }
     }
 
@@ -132,9 +125,7 @@ public class NftLogManager {
         while (running || !writeQueue.isEmpty()) {
             try {
                 String[] entry = writeQueue.poll(500, TimeUnit.MILLISECONDS);
-                if (entry != null) {
-                    appendLine(Paths.get(entry[0]), entry[1]);
-                }
+                if (entry != null) appendLine(Paths.get(entry[0]), entry[1]);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -148,7 +139,7 @@ public class NftLogManager {
             w.write(line);
             w.newLine();
         } catch (IOException e) {
-            LOGGER.error("[NFT Log] Error escribiendo en {}: {}", file, e.getMessage());
+            LOGGER.error("[UFT Log] Error escribiendo en {}: {}", file, e.getMessage());
         }
     }
 
@@ -177,7 +168,6 @@ public class NftLogManager {
         return LocalDateTime.now().format(FMT);
     }
 
-    /** Limpia el tracker de spam (útil para tests) */
     public static void clearSpamCache() {
         spamTracker.clear();
     }
